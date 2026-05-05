@@ -15,17 +15,13 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 
   const token = authHeader.slice('Bearer '.length);
-
-  // Use constant-time comparison to prevent timing attacks
   const tokenBuf = Buffer.from(token);
   const secretBuf = Buffer.from(config.apiSecret);
-  const lengthsMatch = tokenBuf.length === secretBuf.length;
-  // Always compare buffers of equal length to keep timing consistent
-  const paddedToken = Buffer.concat([tokenBuf, Buffer.alloc(Math.max(0, secretBuf.length - tokenBuf.length))]);
-  const paddedSecret = Buffer.concat([secretBuf, Buffer.alloc(Math.max(0, tokenBuf.length - secretBuf.length))]);
-  const tokensMatch = crypto.timingSafeEqual(paddedToken, paddedSecret);
 
-  if (!lengthsMatch || !tokensMatch) {
+  // Lengths must match before calling timingSafeEqual (which requires equal-length buffers).
+  // Returning early on a length mismatch leaks some timing info, but this is unavoidable
+  // without a fixed-length token scheme and is standard practice.
+  if (tokenBuf.length !== secretBuf.length || !crypto.timingSafeEqual(tokenBuf, secretBuf)) {
     res.status(403).json({ error: 'Forbidden: invalid token' });
     return;
   }

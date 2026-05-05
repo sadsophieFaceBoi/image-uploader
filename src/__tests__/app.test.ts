@@ -23,7 +23,11 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+  try {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  } catch (err) {
+    console.error('Warning: failed to clean up test temp directory:', err);
+  }
 });
 
 // A minimal 1×1 PNG in base64

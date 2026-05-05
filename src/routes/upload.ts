@@ -30,9 +30,10 @@ function resolveUploadPath(...parts: string[]): string {
 
 /** Sanitise a user-supplied folder or filename segment. */
 function sanitiseSegment(segment: string): string {
-  // Keep only safe characters, then collapse any remaining consecutive dots to one
+  // Keep only safe characters, then collapse any remaining consecutive dots to one.
+  // Leading dots are removed intentionally to prevent hidden-directory creation
+  // (e.g. .git, .ssh) — all server-generated filenames are UUIDs and never start with dots.
   const cleaned = segment.replace(/[^a-zA-Z0-9._-]/g, '_');
-  // Disallow '..': collapse multiple dots into a single dot
   return cleaned.replace(/\.{2,}/g, '.').replace(/^\.+/, '');
 }
 

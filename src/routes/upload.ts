@@ -30,8 +30,10 @@ function resolveUploadPath(...parts: string[]): string {
 
 /** Sanitise a user-supplied folder or filename segment. */
 function sanitiseSegment(segment: string): string {
-  // Strip leading dots, directory separators and null bytes; keep only safe chars
-  return segment.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^\.+/, '');
+  // Keep only safe characters, then collapse any remaining consecutive dots to one
+  const cleaned = segment.replace(/[^a-zA-Z0-9._-]/g, '_');
+  // Disallow '..': collapse multiple dots into a single dot
+  return cleaned.replace(/\.{2,}/g, '.').replace(/^\.+/, '');
 }
 
 function buildStorage(folder: string) {

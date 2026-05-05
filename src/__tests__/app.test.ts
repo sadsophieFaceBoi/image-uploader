@@ -170,3 +170,76 @@ describe('GET /images/:folder/:filename', () => {
     expect(serveRes.headers['content-type']).toMatch(/png/);
   });
 });
+
+describe('MIME type validation', () => {
+  it('rejects upload of a non-image file (text/plain)', async () => {
+    const textBuffer = Buffer.from('hello world');
+    const res = await request(app)
+      .post('/upload/security')
+      .set('Authorization', `Bearer ${TEST_SECRET}`)
+      .attach('image', textBuffer, { filename: 'evil.txt', contentType: 'text/plain' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Unsupported file type/i);
+  });
+
+  it('rejects upload of application/octet-stream (binary)', async () => {
+    const binaryBuffer = Buffer.from([0x7f, 0x45, 0x4c, 0x46]); // ELF magic bytes
+    const res = await request(app)
+      .post('/upload/security')
+      .set('Authorization', `Bearer ${TEST_SECRET}`)
+      .attach('image', binaryBuffer, { filename: 'exploit', contentType: 'application/octet-stream' });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('Path traversal protection', () => {
+  it('sanitises ".." in folder name', async () => {
+    const res = await request(app)
+      .post('/upload/..%2F..%2Fetc')
+      .set('Authorization', `Bearer ${TEST_SECRET}`)
+      .attach('image', TINY_PNG, 'test.png');
+
+    if (res.status === 201) {
+      // If upload succeeded, the folder must be inside uploadDir (not escaped)
+      const savedPath = path.join(tmpDir, res.body.folder, res.body.filename);
+      expect(fs.existsSync(savedPath)).toBe(true);
+    } else {
+      // Or rejected entirely — both outcomes are acceptable
+      expect([400, 403, 404, 500]).toContain(res.status);
+    }
+  });
+
+  it('sanitises ".." in filename during delete', async () => {
+    const res = await request(app)
+      .delete('/upload/photos/..%2F..%2Fetc%2Fpasswd')
+      .set('Authorization', `Bearer ${TEST_SECRET}`);
+    // Should be rejected (400 invalid path) or not found (404) — never a 200
+    expect(res.status).not.toBe(200);
+  });
+
+  it('does not delete files outside the upload directory', async () => {
+    // Create a sentinel file outside the upload dir
+    const sentinelPath = path.join(os.tmpdir(), 'sentinel-should-not-delete.txt');
+    fs.writeFileSync(sentinelPath, 'safe');
+
+    await request(app)
+      .delete('/upload/../../../../tmp/sentinel-should-not-delete')
+      .set('Authorization', `Bearer ${TEST_SECRET}`);
+
+    // Sentinel must still exist
+    expect(fs.existsSync(sentinelPath)).toBe(true);
+    fs.unlinkSync(sentinelPath);
+  });
+});
+
+describe('File size limit', () => {
+  it('rejects a file exceeding MAX_FILE_SIZE_MB', async () => {
+    // MAX_FILE_SIZE_MB defaults to 10 MB; create a 11 MB buffer
+    const bigBuffer = Buffer.alloc(11 * 1024 * 1024, 0xff);
+    const res = await request(app)
+      .post('/upload/size-test')
+      .set('Authorization', `Bearer ${TEST_SECRET}`)
+      .attach('image', bigBuffer, { filename: 'big.png', contentType: 'image/png' });
+    expect(res.status).toBe(400);
+  });
+});

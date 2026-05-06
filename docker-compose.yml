@@ -1,0 +1,35 @@
+services:
+  image-uploader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: image-uploader:latest
+    container_name: image-uploader
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      PORT: "3000"
+      # Base URL used in returned image URLs (set to your public domain)
+      BASE_URL: "${BASE_URL:-http://localhost:3000}"
+      # Directory inside the container where images are stored
+      UPLOAD_DIR: "/uploads"
+      # Maximum single-file upload size in megabytes (default 10)
+      MAX_FILE_SIZE_MB: "${MAX_FILE_SIZE_MB:-10}"
+      # Bearer token secret — supply via GitHub secret / .env file, never hard-code
+      API_SECRET: "${API_SECRET}"
+    volumes:
+      # Mount a host path into the container's upload directory.
+      # Set UPLOADS_PATH in your .env (e.g. UPLOADS_PATH=/data/images)
+      - "${UPLOADS_PATH:-./uploads}:/uploads"
+    security_opt:
+      - no-new-privileges:true
+    read_only: false   # uploads dir must remain writable
+    tmpfs:
+      - /tmp
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"

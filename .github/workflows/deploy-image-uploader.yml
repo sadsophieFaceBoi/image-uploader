@@ -1,0 +1,79 @@
+name: Deploy Image Uploader
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - "src/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - ".github/workflows/deploy-image-uploader.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-image-uploader-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          UPLOADS_PATH: ${{ secrets.UPLOADS_PATH }}
+          HOST_PORT: ${{ secrets.HOST_PORT }}
+          MAX_FILE_SIZE_MB: ${{ secrets.MAX_FILE_SIZE_MB }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: DEPLOY_PATH,DEPLOY_BRANCH,GITHUB_REPOSITORY,GIT_DEPLOY_KEY,API_SECRET,BASE_URL,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            mkdir -p "$HOME/.ssh"
+            chmod 700 "$HOME/.ssh"
+
+            # Key used by the server to pull this repository from GitHub over SSH.
+            printf '%s\n' "$GIT_DEPLOY_KEY" > "$HOME/.ssh/github_deploy_key"
+            chmod 600 "$HOME/.ssh/github_deploy_key"
+
+            if ! ssh-keygen -F github.com > /dev/null; then
+              ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
+            fi
+
+            export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/github_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+
+            if [ ! -d "$DEPLOY_PATH/.git" ]; then
+              git clone --branch "$DEPLOY_BRANCH" "git@github.com:$GITHUB_REPOSITORY.git" "$DEPLOY_PATH"
+            else
+              git -C "$DEPLOY_PATH" fetch --all --prune
+              git -C "$DEPLOY_PATH" checkout "$DEPLOY_BRANCH"
+              git -C "$DEPLOY_PATH" reset --hard "origin/$DEPLOY_BRANCH"
+            fi
+
+            cat > "$DEPLOY_PATH/.env" <<EOF
+            API_SECRET=${API_SECRET}
+            BASE_URL=${BASE_URL}
+            UPLOADS_PATH=${UPLOADS_PATH}
+            HOST_PORT=${HOST_PORT}
+            MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB}
+            EOF
+
+            cd "$DEPLOY_PATH"
+            docker compose up -d --build image-uploader
+            docker compose ps

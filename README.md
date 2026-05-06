@@ -1,7 +1,9 @@
 # image-uploader
 
 A production-ready TypeScript image upload API that runs in a Docker container with a mounted file path.
-
+The actual url used in real life is https://bartsthriftstores.ie/media/products/images
+the images are stored in /home/ubuntu/bartsthriftstores/images
+Host port is 8008 hehe
 ## Features
 
 - Upload images to named folders on the server
@@ -22,6 +24,7 @@ All protected routes require an `Authorization: Bearer <API_SECRET>` header.
 | `POST` | `/upload/:folder` | ✅ Yes | Upload an image; returns `{ url, filename, folder }` |
 | `PUT` | `/upload/:folder/:filename` | ✅ Yes | Replace an image; returns `{ url, filename, folder }` |
 | `DELETE` | `/upload/:folder/:filename` | ✅ Yes | Delete an image |
+| `GET` | `/images/list/:folder` | No | List image files in a folder |
 | `GET` | `/images/:folder/:filename` | No | Serve an uploaded image |
 
 ### Upload an image
@@ -74,15 +77,17 @@ docker compose up -d
 
 ## Environment variables
 
+The app automatically loads variables from a local `.env` file.
+
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `API_SECRET` | ✅ Yes | – | Bearer token for protected routes (set via GitHub secret) |
 | `BASE_URL` | No | `http://localhost:3000` | Public base URL prepended to returned image URLs |
-| `UPLOADS_PATH` | No | `./uploads` | Host directory mounted into the container |
+| `UPLOADS_PATH` | No | `./uploads` | Fallback local upload path and Docker host directory for volume mapping |
 | `HOST_PORT` | No | `3000` | Host port the container is exposed on |
 | `MAX_FILE_SIZE_MB` | No | `10` | Maximum upload size in megabytes |
 | `PORT` | No | `3000` | Port the app listens on inside the container |
-| `UPLOAD_DIR` | No | `/uploads` | Path inside the container where files are stored |
+| `UPLOAD_DIR` | No | `/uploads` | Primary upload path used by the API (supports local or container path) |
 
 ## Development
 

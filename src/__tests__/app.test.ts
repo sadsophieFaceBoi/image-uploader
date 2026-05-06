@@ -175,6 +175,38 @@ describe('GET /images/:folder/:filename', () => {
   });
 });
 
+describe('GET /images/list/:folder', () => {
+  it('lists uploaded images in a folder', async () => {
+    const uploadRes1 = await request(app)
+      .post('/upload/gallery')
+      .set('Authorization', `Bearer ${TEST_SECRET}`)
+      .attach('image', TINY_PNG, 'a.png');
+
+    const uploadRes2 = await request(app)
+      .post('/upload/gallery')
+      .set('Authorization', `Bearer ${TEST_SECRET}`)
+      .attach('image', TINY_PNG, 'b.png');
+
+    expect(uploadRes1.status).toBe(201);
+    expect(uploadRes2.status).toBe(201);
+
+    const listRes = await request(app).get('/images/list/gallery');
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.folder).toBe('gallery');
+    expect(listRes.body.count).toBeGreaterThanOrEqual(2);
+    expect(Array.isArray(listRes.body.images)).toBe(true);
+    expect(listRes.body.images[0]).toMatchObject({
+      filename: expect.any(String),
+      url: expect.stringContaining('/images/gallery/'),
+    });
+  });
+
+  it('returns 404 for a folder that does not exist', async () => {
+    const res = await request(app).get('/images/list/does-not-exist');
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('MIME type validation', () => {
   it('rejects upload of a non-image file (text/plain)', async () => {
     const textBuffer = Buffer.from('hello world');

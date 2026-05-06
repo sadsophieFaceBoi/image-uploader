@@ -1,8 +1,7 @@
 import express from 'express';
-import path from 'path';
 import rateLimit from 'express-rate-limit';
-import { config } from './config';
 import uploadRouter from './routes/upload';
+import imagesRouter from './routes/images';
 
 export function createApp() {
   const app = express();
@@ -26,11 +25,8 @@ export function createApp() {
   // Upload / update / delete routes (rate limited)
   app.use('/upload', uploadLimiter, uploadRouter);
 
-  // Serve uploaded images statically
-  app.use('/images', express.static(path.resolve(config.uploadDir), {
-    index: false,
-    dotfiles: 'deny',
-  }));
+  // Serve uploaded images via explicit API route
+  app.use('/images', imagesRouter);
 
   // 404 fallback
   app.use((_req, res) => {

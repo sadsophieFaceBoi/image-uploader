@@ -44,6 +44,7 @@ jobs:
         env:
           API_SECRET: ${{ secrets.API_SECRET }}
           BASE_URL: ${{ secrets.BASE_URL }}
+          PUBLIC_IMAGES_PATH: ${{ secrets.PUBLIC_IMAGES_PATH }}
           UPLOADS_PATH: ${{ secrets.UPLOADS_PATH }}
           HOST_PORT: ${{ secrets.HOST_PORT }}
           MAX_FILE_SIZE_MB: ${{ secrets.MAX_FILE_SIZE_MB }}
@@ -51,7 +52,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: API_SECRET,BASE_URL,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB
+          envs: API_SECRET,BASE_URL,PUBLIC_IMAGES_PATH,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB
           script_stop: true
           script: |
             set -eu
@@ -59,6 +60,7 @@ jobs:
             cat > "${{ secrets.DEPLOY_PATH }}/.env" <<EOF
             API_SECRET=${API_SECRET}
             BASE_URL=${BASE_URL}
+            PUBLIC_IMAGES_PATH=${PUBLIC_IMAGES_PATH}
             UPLOADS_PATH=${UPLOADS_PATH}
             HOST_PORT=${HOST_PORT}
             MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB}
@@ -69,6 +71,7 @@ jobs:
         env:
           API_SECRET: ${{ secrets.API_SECRET }}
           BASE_URL: ${{ secrets.BASE_URL }}
+          PUBLIC_IMAGES_PATH: ${{ secrets.PUBLIC_IMAGES_PATH }}
           UPLOADS_PATH: ${{ secrets.UPLOADS_PATH }}
           HOST_PORT: ${{ secrets.HOST_PORT }}
           MAX_FILE_SIZE_MB: ${{ secrets.MAX_FILE_SIZE_MB }}
@@ -76,7 +79,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: API_SECRET,BASE_URL,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB
+          envs: API_SECRET,BASE_URL,PUBLIC_IMAGES_PATH,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB
           script_stop: true
           script: |
             set -euxo pipefail
@@ -84,6 +87,7 @@ jobs:
 
             API_SECRET="$API_SECRET" \
             BASE_URL="$BASE_URL" \
+            PUBLIC_IMAGES_PATH="$PUBLIC_IMAGES_PATH" \
             UPLOADS_PATH="$UPLOADS_PATH" \
             HOST_PORT="$HOST_PORT" \
             MAX_FILE_SIZE_MB="$MAX_FILE_SIZE_MB" \

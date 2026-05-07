@@ -13,6 +13,8 @@ services:
       PORT: "3000"
       # Base URL used in returned image URLs (set to your public domain)
       BASE_URL: "${BASE_URL:-http://localhost:3000}"
+      # Public path prefix used when generating image URLs
+      PUBLIC_IMAGES_PATH: "${PUBLIC_IMAGES_PATH:-/images}"
       # Directory inside the container where images are stored
       UPLOAD_DIR: "/uploads"
       # Maximum single-file upload size in megabytes (default 10)

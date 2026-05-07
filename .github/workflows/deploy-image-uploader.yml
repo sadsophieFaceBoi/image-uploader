@@ -24,6 +24,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate deploy secrets
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+
+          key_file="$(mktemp)"
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$key_file"
+
+          grep -q '^-----BEGIN OPENSSH PRIVATE KEY-----' "$key_file"
+          ssh-keygen -y -f "$key_file" > /dev/null 2>&1
+
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -38,6 +58,7 @@ jobs:
           MAX_FILE_SIZE_MB: ${{ secrets.MAX_FILE_SIZE_MB }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
+          port: 22
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           envs: DEPLOY_PATH,DEPLOY_BRANCH,GITHUB_REPOSITORY,GIT_DEPLOY_KEY,API_SECRET,BASE_URL,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB

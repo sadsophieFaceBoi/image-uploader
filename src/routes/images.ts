@@ -84,7 +84,7 @@ router.get('/list/:folder', (req: Request, res: Response) => {
       .sort((a, b) => a.localeCompare(b))
       .map((filename) => ({
         filename,
-        url: `${config.baseUrl}/images/${folder}/${filename}`,
+        url: `${config.baseUrl}${config.publicImagesPath}/${folder}/${filename}`,
       }));
 
     res.status(200).json({ folder, count: images.length, images });

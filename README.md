@@ -64,6 +64,7 @@ cp .env.example .env
 ```env
 API_SECRET=your-strong-random-secret   # e.g. openssl rand -hex 32
 BASE_URL=https://images.example.com
+PUBLIC_IMAGES_PATH=/images
 UPLOADS_PATH=/data/images              # host path to store images
 HOST_PORT=3000
 MAX_FILE_SIZE_MB=10
@@ -83,6 +84,7 @@ The app automatically loads variables from a local `.env` file.
 |----------|----------|---------|-------------|
 | `API_SECRET` | ✅ Yes | – | Bearer token for protected routes (set via GitHub secret) |
 | `BASE_URL` | No | `http://localhost:3000` | Public base URL prepended to returned image URLs |
+| `PUBLIC_IMAGES_PATH` | No | `/images` | Public path prefix used when building returned image URLs |
 | `UPLOADS_PATH` | No | `./uploads` | Fallback local upload path and Docker host directory for volume mapping |
 | `HOST_PORT` | No | `3000` | Host port the container is exposed on |
 | `MAX_FILE_SIZE_MB` | No | `10` | Maximum upload size in megabytes |

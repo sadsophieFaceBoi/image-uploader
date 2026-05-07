@@ -86,7 +86,7 @@ router.post('/:folder', requireAuth, (req: Request, res: Response) => {
       res.status(400).json({ error: 'No file uploaded. Use the "image" field.' });
       return;
     }
-    const url = `${config.baseUrl}/images/${folder}/${req.file.filename}`;
+    const url = `${config.baseUrl}${config.publicImagesPath}/${folder}/${req.file.filename}`;
     res.status(201).json({ url, filename: req.file.filename, folder });
   });
 });
@@ -124,7 +124,7 @@ router.put('/:folder/:filename', requireAuth, (req: Request, res: Response) => {
       // Non-fatal: proceed even if old file cannot be removed
     }
 
-    const url = `${config.baseUrl}/images/${folder}/${req.file.filename}`;
+    const url = `${config.baseUrl}${config.publicImagesPath}/${folder}/${req.file.filename}`;
     res.status(200).json({ url, filename: req.file.filename, folder });
   });
 });

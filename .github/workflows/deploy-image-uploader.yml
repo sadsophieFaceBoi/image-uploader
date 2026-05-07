@@ -44,57 +44,65 @@ jobs:
           grep -q '^-----BEGIN OPENSSH PRIVATE KEY-----' "$key_file"
           ssh-keygen -y -f "$key_file" > /dev/null 2>&1
 
-      - name: Deploy on server
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Deploy on server over SSH
+        shell: bash
         env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
           API_SECRET: ${{ secrets.API_SECRET }}
           BASE_URL: ${{ secrets.BASE_URL }}
           UPLOADS_PATH: ${{ secrets.UPLOADS_PATH }}
           HOST_PORT: ${{ secrets.HOST_PORT }}
           MAX_FILE_SIZE_MB: ${{ secrets.MAX_FILE_SIZE_MB }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          port: 22
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: DEPLOY_PATH,DEPLOY_BRANCH,GITHUB_REPOSITORY,GIT_DEPLOY_KEY,API_SECRET,BASE_URL,UPLOADS_PATH,HOST_PORT,MAX_FILE_SIZE_MB
-          script_stop: true
-          script: |
-            set -euo pipefail
+        run: |
+          set -euo pipefail
 
-            mkdir -p "$HOME/.ssh"
-            chmod 700 "$HOME/.ssh"
+          runner_key="$(mktemp)"
+          trap 'rm -f "$runner_key"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$runner_key"
+          chmod 600 "$runner_key"
 
-            # Key used by the server to pull this repository from GitHub over SSH.
-            printf '%s\n' "$GIT_DEPLOY_KEY" > "$HOME/.ssh/github_deploy_key"
-            chmod 600 "$HOME/.ssh/github_deploy_key"
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          ssh-keyscan -H "$DEPLOY_HOST" >> "$HOME/.ssh/known_hosts"
 
-            if ! ssh-keygen -F github.com > /dev/null; then
-              ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
-            fi
+          ssh -i "$runner_key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" <<EOF
+          set -euo pipefail
 
-            export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/github_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
 
-            if [ ! -d "$DEPLOY_PATH/.git" ]; then
-              git clone --branch "$DEPLOY_BRANCH" "git@github.com:$GITHUB_REPOSITORY.git" "$DEPLOY_PATH"
-            else
-              git -C "$DEPLOY_PATH" fetch --all --prune
-              git -C "$DEPLOY_PATH" checkout "$DEPLOY_BRANCH"
-              git -C "$DEPLOY_PATH" reset --hard "origin/$DEPLOY_BRANCH"
-            fi
+          printf '%s\n' "$GIT_DEPLOY_KEY" > "$HOME/.ssh/github_deploy_key"
+          chmod 600 "$HOME/.ssh/github_deploy_key"
 
-            cat > "$DEPLOY_PATH/.env" <<EOF
-            API_SECRET=${API_SECRET}
-            BASE_URL=${BASE_URL}
-            UPLOADS_PATH=${UPLOADS_PATH}
-            HOST_PORT=${HOST_PORT}
-            MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB}
-            EOF
+          if ! ssh-keygen -F github.com > /dev/null; then
+            ssh-keyscan -H github.com >> "$HOME/.ssh/known_hosts"
+          fi
 
-            cd "$DEPLOY_PATH"
-            docker compose up -d --build image-uploader
-            docker compose ps
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/github_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+
+          if [ ! -d "$DEPLOY_PATH/.git" ]; then
+            git clone --branch "$DEPLOY_BRANCH" "git@github.com:$GITHUB_REPOSITORY.git" "$DEPLOY_PATH"
+          else
+            git -C "$DEPLOY_PATH" fetch --all --prune
+            git -C "$DEPLOY_PATH" checkout "$DEPLOY_BRANCH"
+            git -C "$DEPLOY_PATH" reset --hard "origin/$DEPLOY_BRANCH"
+          fi
+
+          cat > "$DEPLOY_PATH/.env" <<ENVEOF
+          API_SECRET=${API_SECRET}
+          BASE_URL=${BASE_URL}
+          UPLOADS_PATH=${UPLOADS_PATH}
+          HOST_PORT=${HOST_PORT}
+          MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB}
+          ENVEOF
+
+          cd "$DEPLOY_PATH"
+          docker compose up -d --build image-uploader
+          docker compose ps
+          EOF

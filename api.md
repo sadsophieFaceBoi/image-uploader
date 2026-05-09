@@ -103,7 +103,7 @@ This means input may be transformed. Clients should always trust returned `folde
 
 ### 6.1 Health Check
 
-### `GET /health`
+#### `GET /health`
 
 No auth required.
 
@@ -115,7 +115,7 @@ No auth required.
 
 ### 6.2 Upload Image
 
-### `POST /upload/:folder`
+#### `POST /upload/:folder`
 
 Protected route.
 
@@ -147,7 +147,7 @@ Protected route.
 
 ### 6.3 Replace Existing Image
 
-### `PUT /upload/:folder/:filename`
+#### `PUT /upload/:folder/:filename`
 
 Protected route.
 
@@ -186,7 +186,7 @@ Uploads a new image and attempts to delete the old file.
 
 ### 6.4 Delete Image
 
-### `DELETE /upload/:folder/:filename`
+#### `DELETE /upload/:folder/:filename`
 
 Protected route.
 
@@ -220,7 +220,7 @@ Protected route.
 
 ### 6.5 List Images in Folder
 
-### `GET /images/list/:folder`
+#### `GET /images/list/:folder`
 
 No auth required.
 
@@ -263,7 +263,7 @@ No auth required.
 
 ### 6.6 Serve Image File
 
-### `GET /images/*`
+#### `GET /images/*`
 
 No auth required.
 

@@ -62,7 +62,7 @@ Routes under `/upload` are rate-limited:
 
 ## 5) File and Path Rules
 
-## 5.1 Allowed upload MIME types
+### 5.1 Allowed upload MIME types
 
 - `image/jpeg`
 - `image/png`
@@ -75,7 +75,7 @@ Routes under `/upload` are rate-limited:
 If MIME type is unsupported:
 - `400` with `{"error":"Unsupported file type: <mime>"}`.
 
-## 5.2 Upload field name
+### 5.2 Upload field name
 
 Multipart form field name must be exactly:
 - `image`
@@ -83,13 +83,13 @@ Multipart form field name must be exactly:
 If missing:
 - `400` with `{"error":"No file uploaded. Use the \"image\" field."}`
 
-## 5.3 Max file size
+### 5.3 Max file size
 
 Configured by `MAX_FILE_SIZE_MB` (default `10` MB).
 
 Oversized files return `400` (multer validation error).
 
-## 5.4 Folder and filename sanitization
+### 5.4 Folder and filename sanitization
 
 User-provided path segments (`:folder`, `:filename`) are sanitized before use:
 
@@ -101,7 +101,7 @@ This means input may be transformed. Clients should always trust returned `folde
 
 ## 6) Endpoints
 
-## 6.1 Health Check
+### 6.1 Health Check
 
 ### `GET /health`
 
@@ -113,7 +113,7 @@ No auth required.
 
 ---
 
-## 6.2 Upload Image
+### 6.2 Upload Image
 
 ### `POST /upload/:folder`
 
@@ -145,7 +145,7 @@ Protected route.
 
 ---
 
-## 6.3 Replace Existing Image
+### 6.3 Replace Existing Image
 
 ### `PUT /upload/:folder/:filename`
 
@@ -184,7 +184,7 @@ Uploads a new image and attempts to delete the old file.
 
 ---
 
-## 6.4 Delete Image
+### 6.4 Delete Image
 
 ### `DELETE /upload/:folder/:filename`
 
@@ -218,7 +218,7 @@ Protected route.
 
 ---
 
-## 6.5 List Images in Folder
+### 6.5 List Images in Folder
 
 ### `GET /images/list/:folder`
 
@@ -261,7 +261,7 @@ No auth required.
 
 ---
 
-## 6.6 Serve Image File
+### 6.6 Serve Image File
 
 ### `GET /images/*`
 
@@ -295,7 +295,7 @@ Any unmatched route returns:
 
 ## 8) cURL Examples
 
-## 8.1 Upload
+### 8.1 Upload
 
 ```bash
 curl -X POST "https://your-server/upload/photos" \
@@ -303,7 +303,7 @@ curl -X POST "https://your-server/upload/photos" \
   -F "image=@/absolute/path/to/photo.png"
 ```
 
-## 8.2 Replace
+### 8.2 Replace
 
 ```bash
 curl -X PUT "https://your-server/upload/photos/old-file.png" \
@@ -311,20 +311,20 @@ curl -X PUT "https://your-server/upload/photos/old-file.png" \
   -F "image=@/absolute/path/to/new-photo.png"
 ```
 
-## 8.3 Delete
+### 8.3 Delete
 
 ```bash
 curl -X DELETE "https://your-server/upload/photos/file-to-delete.png" \
   -H "Authorization: Bearer $API_SECRET"
 ```
 
-## 8.4 List
+### 8.4 List
 
 ```bash
 curl "https://your-server/images/list/photos"
 ```
 
-## 8.5 Serve
+### 8.5 Serve
 
 ```bash
 curl -O "https://your-server/images/photos/example.png"

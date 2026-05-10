@@ -66,6 +66,8 @@ API_SECRET=your-strong-random-secret   # e.g. openssl rand -hex 32
 BASE_URL=https://images.example.com
 PUBLIC_IMAGES_PATH=/images
 UPLOADS_PATH=/data/images              # host path to store images
+PUID=1000                              # Linux user id to own mounted uploads
+PGID=1000                              # Linux group id to own mounted uploads
 HOST_PORT=3000
 MAX_FILE_SIZE_MB=10
 ```
@@ -86,10 +88,32 @@ The app automatically loads variables from a local `.env` file.
 | `BASE_URL` | No | `http://localhost:3000` | Public base URL prepended to returned image URLs |
 | `PUBLIC_IMAGES_PATH` | No | `/images` | Public path prefix used when building returned image URLs |
 | `UPLOADS_PATH` | No | `./uploads` | Fallback local upload path and Docker host directory for volume mapping |
+| `PUID` | No | `1000` | UID used by the container and init job to own the mounted upload path |
+| `PGID` | No | `1000` | GID used by the container and init job to own the mounted upload path |
 | `HOST_PORT` | No | `3000` | Host port the container is exposed on |
 | `MAX_FILE_SIZE_MB` | No | `10` | Maximum upload size in megabytes |
 | `PORT` | No | `3000` | Port the app listens on inside the container |
 | `UPLOAD_DIR` | No | `/uploads` | Primary upload path used by the API (supports local or container path) |
+
+## Stable deploy permissions
+
+This project includes a dedicated `init-upload-permissions` service in `docker-compose.yml`.
+On every deploy it:
+
+- creates the mounted upload path if needed,
+- sets ownership to `PUID:PGID`,
+- enforces directory mode `775` and file mode `664`.
+
+The main `image-uploader` service then runs as the same `PUID:PGID` so uploads remain writable across redeploys and host reboots.
+
+Example production values:
+
+```env
+UPLOADS_PATH=/home/ubuntu/bartsthriftstores/images
+PUID=1000
+PGID=1000
+HOST_PORT=8008
+```
 
 ## Development
 

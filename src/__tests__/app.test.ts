@@ -42,6 +42,18 @@ describe('GET /health', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok' });
   });
+
+  it('redirects the root route to the tester UI', async () => {
+    const res = await request(app).get('/');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe('/tester');
+  });
+
+  it('serves the tester UI', async () => {
+    const res = await request(app).get('/tester');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Image Uploader Test Bench');
+  });
 });
 
 describe('Auth middleware', () => {

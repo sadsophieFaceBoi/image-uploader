@@ -1,4 +1,16 @@
 services:
+  init-upload-permissions:
+    image: alpine:3.20
+    container_name: image-uploader-init-permissions
+    restart: "no"
+    command: >-
+      sh -c "mkdir -p /uploads &&
+      chown -R ${PUID:-1000}:${PGID:-1000} /uploads &&
+      find /uploads -type d -exec chmod 775 {} \; &&
+      find /uploads -type f -exec chmod 664 {} \;"
+    volumes:
+      - "${UPLOADS_PATH:-./uploads}:/uploads"
+
   image-uploader:
     build:
       context: .
@@ -7,6 +19,10 @@ services:
     image: image-uploader:latest
     container_name: image-uploader
     restart: unless-stopped
+    depends_on:
+      init-upload-permissions:
+        condition: service_completed_successfully
+    user: "${PUID:-1000}:${PGID:-1000}"
     ports:
       - "${HOST_PORT:-3000}:3000"
     environment:
